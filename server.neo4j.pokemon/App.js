@@ -1,3 +1,4 @@
+const neo4j = require("neo4j-driver");
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -12,6 +13,12 @@ const pool = new Pool({
   password: "adminpassword",
   database: "paw",
 });
+
+const driver = new neo4j.driver(
+  "neo4j://localhost:7687",
+  neo4j.auth.basic("neo4j", "admin123")
+);
+const session = driver.session();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,30 +43,51 @@ app.post("/pokemon", (req, res) => {
     } else if (err) {
       return res.status(500).json(err);
     }
-    pool.query(
-      "insert into app.pokemon (nama,deskripsi,path) values($1,$2,$3)",
-      [req.body.nama, req.body.deskripsi, "/images/" + req.file.filename],
-      (err, result) => {
-        if (err) {
-          return res.status(500).json(err);
-        }
-        pool.query("select * from app.pokemon", (err, result) => {
-          if (err) {
-            return res.status(500).json(err);
-          }
-          return res.status(200).json(result.rows);
-        });
-      }
-    );
+    session
+      .run(
+        `CREATE (n:pokemon {nama: "${req.body.nama}", deskripsi: "${req.body.deskripsi}", path: "/images/${req.file.filename}"})`
+      )
+      .then((result) => {
+        return res.status(200).json(result);
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.status(500).json(err);
+      });
+    // pool.query(
+    //   "insert into app.pokemon (nama,deskripsi,path) values($1,$2,$3)",
+    //   [req.body.nama, req.body.deskripsi, "/images/" + req.file.filename],
+    //   (err, result) => {
+    //     if (err) {
+    //       return res.status(500).json(err);
+    //     }
+    //     pool.query("select * from app.pokemon", (err, result) => {
+    //       if (err) {
+    //         return res.status(500).json(err);
+    //       }
+    //       return res.status(200).json(result.rows);
+    //     });
+    //   }
+    // );
   });
 });
 app.get("/pokemon", (req, res) => {
-  pool.query("select * from app.pokemon", (err, result) => {
-    if (err) {
+  session
+    .run("MATCH (n:pokemon) RETURN properties(n)")
+    .then((result) => {
+      return res.status(200).json(result);
+    })
+    .catch((err) => {
+      console.log(err);
       return res.status(500).json(err);
-    }
-    return res.status(200).json(result.rows);
-  });
+    });
+
+  // pool.query("select * from app.pokemon", (err, result) => {
+  //   if (err) {
+  //     return res.status(500).json(err);
+  //   }
+  //   return res.status(200).json(result.rows);
+  // });
 });
 
 app.delete("/pokemon/delete/:name", (req, res) => {

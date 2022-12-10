@@ -17,8 +17,12 @@ function Main() {
         "Access-Control-Allow-Origin": "*",
       })
       .then((res) => {
-        console.log(res.data);
-        setPokemons(res.data);
+        const dataArray = [];
+        res.data.records.map((item) => {
+          console.log(item._fields[0]);
+          dataArray.push(item._fields[0]);
+          setPokemons(dataArray);
+        });
       });
   }, []);
 
@@ -97,6 +101,7 @@ function Main() {
       setPokemons(res.data);
       setIsOpen(!isOpen);
     });
+    window.location.reload();
   }
 
   function handleClickTambah() {
