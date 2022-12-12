@@ -7,13 +7,13 @@ const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
 
-const pool = new Pool({
-  host: "194.233.91.96",
-  port: "5050",
-  user: "admin",
-  password: "adminpassword",
-  database: "paw",
-});
+// const pool = new Pool({
+//   host: "194.233.91.96",
+//   port: "5050",
+//   user: "admin",
+//   password: "adminpassword", 
+//   database: "paw",
+// });
 
 const driver = new neo4j.driver( //pemanggilan neo4j
   "neo4j://localhost:7687",
