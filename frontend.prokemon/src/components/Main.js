@@ -17,6 +17,7 @@ function Main() {
         "Access-Control-Allow-Origin": "*",
       })
       .then((res) => {
+        console.log(res)
         const dataArray = [];
         res.data.records.map((item) => {
           console.log(item._fields[0]);

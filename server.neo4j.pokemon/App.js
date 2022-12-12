@@ -14,11 +14,11 @@ const pool = new Pool({
   database: "paw",
 });
 
-const driver = new neo4j.driver(
+const driver = new neo4j.driver( //pemanggilan neo4j
   "neo4j://localhost:7687",
-  neo4j.auth.basic("neo4j", "admin123")
+  neo4j.auth.basic("neo4j", "admin123") //autentifikasi akun neo4j
 );
-const session = driver.session();
+const session = driver.session(); // menjalani query chipper
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -92,22 +92,33 @@ app.get("/pokemon", (req, res) => {
 
 app.delete("/pokemon/delete/:name", (req, res) => {
   const { name } = req.params;
-  pool.query(
-    `SELECT path FROM app.pokemon WHERE nama='${name}'`,
-    (err, result) => {
-      if (err) {
-        return res.status(500).json(err);
-      }
-      console.log("ini result : ", result.rows[0].path);
-      fs.unlink(path.join(`public${result.rows[0].path}`), (callback) => {});
-    }
-  );
-  pool.query(`DELETE FROM app.pokemon WHERE nama=$1`, [name], (err, result) => {
-    if (err) {
+  session
+    .run(`MATCH (n:pokemon{nama:'${name}'}) DELETE n`)
+    .then((result) => {
+      console.log(result) 
+      return res.status(200).json(result);
+    })
+    .catch((err) => {
+      console.log(err);
       return res.status(500).json(err);
-    }
-    return res.status(200).json(result.rows);
-  });
+    });
+
+  // pool.query(
+  //   `SELECT path FROM app.pokemon WHERE nama='${name}'`,
+  //   (err, result) => {
+  //     if (err) {
+  //       return res.status(500).json(err);
+  //     }
+  //     console.log("ini result : ", result.rows[0].path);
+  //     fs.unlink(path.join(`public${result.rows[0].path}`), (callback) => {});
+  //   }
+  // );
+  // pool.query(`DELETE FROM app.pokemon WHERE nama=$1`, [name], (err, result) => {
+  //   if (err) {
+  //     return res.status(500).json(err);
+  //   }
+  //   return res.status(200).json(result.rows);
+  // });
 });
 
 app.get("/", function (req, res) {
