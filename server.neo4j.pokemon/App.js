@@ -5,6 +5,7 @@ const cors = require("cors");
 const Pool = require("pg").Pool;
 const fs = require("fs");
 const path = require("path");
+const bodyParser = require("body-parser");
 
 const pool = new Pool({
   host: "194.233.91.96",
@@ -27,6 +28,8 @@ app.listen(PORT, () => {
 });
 app.use(cors());
 app.use(express.static("public"));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 const storage = multer.diskStorage({
   destination: "./public/images",
@@ -36,6 +39,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage }).single("file");
 
+// CREATE data pokemon
 app.post("/pokemon", (req, res) => {
   upload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -71,6 +75,8 @@ app.post("/pokemon", (req, res) => {
     // );
   });
 });
+
+// READ data pokemon
 app.get("/pokemon", (req, res) => {
   session
     .run("MATCH (n:pokemon) RETURN properties(n)")
@@ -90,6 +96,39 @@ app.get("/pokemon", (req, res) => {
   // });
 });
 
+// UPDATE data pokemon
+app.put("/pokemon/:name", (req, res) => {
+  const { name } = req.params;
+  const { nama, deskripsi } = req.body;
+  session
+    .run(
+      `MATCH (n:pokemon {nama: "${name}"}) SET n.nama="${nama}", n.deskripsi="${deskripsi}" RETURN n`
+    )
+    .then((result) => {
+      return res.status(200).json(result);
+    })
+    .catch((err) => {
+      console.log(err);
+      return res.status(500).json(err);
+    });
+  // pool.query(
+  //   "insert into app.pokemon (nama,deskripsi,path) values($1,$2,$3)",
+  //   [req.body.nama, req.body.deskripsi, "/images/" + req.file.filename],
+  //   (err, result) => {
+  //     if (err) {
+  //       return res.status(500).json(err);
+  //     }
+  //     pool.query("select * from app.pokemon", (err, result) => {
+  //       if (err) {
+  //         return res.status(500).json(err);
+  //       }
+  //       return res.status(200).json(result.rows);
+  //     });
+  //   }
+  // );
+});
+
+// DELETE data pokemon
 app.delete("/pokemon/delete/:name", (req, res) => {
   const { name } = req.params;
   pool.query(
